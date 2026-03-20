@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duck Race Casino - Fixed Edition</title>
     <style>
-        body { background: #0a0a0a; color: gold; font-family: Arial; text-align: center; margin: 0; }
+        body { background: #0a0a0a; color: gold; font-family: Arial, sans-serif; text-align: center; margin: 0; }
         #track { background: #1e272e; width: 98%; height: 70vh; margin: 5px auto; position: relative; border: 3px solid #333; overflow: hidden; }
         .lane { height: 8.33%; border-bottom: 1px solid #2c3e50; position: relative; }
         .duck { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); transition: left 0.1s linear; }
@@ -34,8 +34,6 @@
     </div>
 
     <script>
-        // --- CHỈNH SỬA TÊN Ở ĐÂY ---
-        // Thay đổi 12 cái tên này theo ý bạn, đây là tên cố định cho tất cả mọi người vào link
         const names = ["Trà Từ Tay", "Thằng Canh Mộ", "Dùng Thanh Nộ", "Chày Từ Ta", "Mộ Xum Xuê", "Tôn Ngộ Đu", "Trừ Ta", "Shisha Ngộ Tĩnh", "Chú Ngộ Đo", "Đường Lên Phộ", "Tày Du Ký", "Ngô Như Đụ"];
 
         let balance = parseInt(localStorage.getItem('duckWebBal')) || 5000;
