@@ -2,93 +2,175 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Duck Race Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duck Race Casino - Edit Names Edition</title>
     <style>
-        body { background: #0a0a0a; color: gold; font-family: Arial; text-align: center; margin: 0; }
-        #track { background: #1e272e; width: 95%; height: 65vh; margin: 10px auto; position: relative; border: 2px solid #444; }
-        .lane { height: 8.3%; border-bottom: 1px solid #2c3e50; position: relative; }
-        .duck { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); }
-        .duck img { height: 40px; }
-        .duck-name { position: absolute; top: -12px; font-size: 11px; color: white; width: 80px; text-align: center; left: 0; }
-        #finish { position: absolute; right: 80px; top: 0; bottom: 0; width: 10px; background: red; }
-        .ctrl { background: #111; padding: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-        button { padding: 10px 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px; }
+        body { background: #0a0a0a; color: gold; font-family: 'Segoe UI', Arial, sans-serif; text-align: center; margin: 0; }
+        #track { background: #1e272e; width: 98%; height: 65vh; margin: 5px auto; position: relative; border: 3px solid #333; overflow: hidden; }
+        .lane { height: 8.33%; border-bottom: 1px solid #2c3e50; position: relative; box-sizing: border-box; }
+        .duck { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 2; transition: left 0.1s linear; }
+        .duck img { height: 45px; display: block; }
+        .duck-name { position: absolute; top: -15px; font-size: 12px; color: white; width: 100px; text-align: center; left: -25px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        #finish { position: absolute; right: 80px; top: 0; bottom: 0; width: 15px; background: repeating-linear-gradient(45deg, #ff1f1f, #ff1f1f 10px, #000 10px, #000 20px); box-shadow: 0 0 15px rgba(255,0,0,0.5); }
+        
+        .ctrl { background: #1a1a1a; padding: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 2px solid gold; }
+        .stats-bar { background: #000; padding: 10px; font-size: 24px; font-weight: bold; }
+        
+        button { padding: 12px 20px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; transition: 0.2s; }
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+        .btn-bet { background: #ffa502; color: #000; }
+        .btn-allin { background: #ff4757; color: white; }
+        .btn-go { background: #1e90ff; color: white; font-size: 20px; padding: 10px 40px; }
+        .btn-name { background: #8e44ad; color: white; }
+
+        /* Modal đổi tên */
+        #nameModal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
+        .modal-content { background: #222; margin: 2% auto; padding: 20px; width: 80%; max-width: 400px; border: 2px solid gold; border-radius: 10px; }
+        .name-input-group { margin: 10px 0; display: flex; justify-content: space-between; }
+        .name-input-group input { width: 70%; padding: 5px; }
     </style>
 </head>
 <body>
-    <h2 id="stats">💰 VỐN: $5000 | 🔥 CƯỢC: $0</h2>
+
+    <div class="stats-bar">
+        💰 <span style="color: gold;" id="balText">5000</span> | 
+        🔥 <span style="color: #ff4757;" id="betText">0</span>
+    </div>
+
     <div id="track">
         <div id="finish"></div>
-    </div>
+        </div>
+
     <div class="ctrl">
-        <span style="color:white">Vịt số:</span>
-        <input type="number" id="duckIdx" value="1" min="1" max="12" style="width: 50px; font-size: 18px;">
-        <button style="background: #ffa502;" onclick="bet(1000)">+ $1000</button>
-        <button style="background: #ff4757; color: white;" onclick="allIn()">TẤT TAY</button>
-        <button id="go" style="background: #1e90ff; color: white; font-size: 18px;" onclick="start()">ĐUA!</button>
+        <button class="btn-name" onclick="toggleModal(true)">✏️ SỬA TÊN VỊT</button>
+        <button style="background: #2ed573;" onclick="deposit()">🏦 NẠP TIỀN</button>
+        <div style="color: white; font-weight: bold; margin: 0 10px;">
+            CƯỢC VỊT SỐ: <input type="number" id="duckIdx" value="1" min="1" max="12" style="width: 50px; font-size: 18px;">
+        </div>
+        <button class="btn-bet" onclick="addBet(1000)">+ $1000</button>
+        <button class="btn-bet" onclick="addBet(5000)">+ $5000</button>
+        <button class="btn-allin" onclick="allIn()">TẤT TAY</button>
+        <button id="goBtn" class="btn-go" onclick="startRace()">ĐUA!</button>
+    </div>
+
+    <div id="nameModal">
+        <div class="modal-content">
+            <h3 style="color: gold;">ĐẶT TÊN CHIẾN BINH</h3>
+            <div id="inputContainer"></div>
+            <button style="background: #2ed573; width: 100%; margin-top: 15px;" onclick="saveNames()">LƯU TÊN & ĐÓNG</button>
+        </div>
     </div>
 
     <script>
-        let bal = parseInt(localStorage.getItem('duckBal')) || 5000;
-        let bAmt = 0;
-        let racing = false;
-        const names = ["Tộc Trưởng", "Độ Mixi", "Refund", "Rambo", "Nhím", "QNT", "Snake", "Funky", "Tiền", "Mèo", "Gà", "Vịt"];
+        // Khởi tạo dữ liệu
+        let balance = parseInt(localStorage.getItem('duckWebBal')) || 5000;
+        let currentBet = 0;
+        let isRacing = false;
+        let names = JSON.parse(localStorage.getItem('duckWebNames')) || 
+                    ["Vịt 1", "Vịt 2", "Vịt 3", "Vịt 4", "Vịt 5", "Vịt 6", "Vịt 7", "Vịt 8", "Vịt 9", "Vịt 10", "Vịt 11", "Vịt 12"];
 
         const track = document.getElementById('track');
         const ducks = [];
 
-        // Tạo 12 con vịt
-        for(let i=0; i<12; i++) {
-            const div = document.createElement('div');
-            div.className = 'lane';
-            const d = document.createElement('div');
-            d.className = 'duck';
-            // Cài đặt ảnh: dùng file của bạn hoặc ảnh mặc định nếu file lỗi
-            d.innerHTML = `<span class="duck-name">${names[i]}</span><img src="vintage-racing.gif" onerror="this.src='https://i.imgur.com/vHqLh7S.gif'">`;
-            div.appendChild(d);
-            track.appendChild(div);
-            ducks.push({el: d, x: 10});
+        // Tạo đường đua và vịt
+        function initGame() {
+            track.innerHTML = '<div id="finish"></div>';
+            ducks.length = 0;
+            for(let i=0; i<12; i++) {
+                const lane = document.createElement('div');
+                lane.className = 'lane';
+                const d = document.createElement('div');
+                d.className = 'duck';
+                d.innerHTML = `<span class="duck-name" id="nm${i}">${names[i]}</span><img src="vintage-racing.gif" onerror="this.src='https://i.imgur.com/vHqLh7S.gif'">`;
+                lane.appendChild(d);
+                track.appendChild(lane);
+                ducks.push({el: d, x: 10});
+            }
+            updateUI();
         }
 
-        function update() {
-            document.getElementById('stats').innerText = `💰 VỐN: $${bal} | 🔥 CƯỢC: $${bAmt}`;
-            localStorage.setItem('duckBal', bal);
+        function updateUI() {
+            document.getElementById('balText').innerText = balance;
+            document.getElementById('betText').innerText = currentBet;
+            localStorage.setItem('duckWebBal', balance);
+            localStorage.setItem('duckWebNames', JSON.stringify(names));
         }
 
-        function bet(a) { if(!racing && bal >= a) { bal -= a; bAmt += a; update(); } }
-        function allIn() { if(!racing && bal > 0) { bAmt += bal; bal = 0; update(); } }
+        // Logic cược
+        function addBet(amt) { if(!isRacing && balance >= amt) { balance -= amt; currentBet += amt; updateUI(); } }
+        function allIn() { if(!isRacing && balance > 0) { currentBet += balance; balance = 0; updateUI(); } }
+        function deposit() { let a = prompt("Nhập số tiền muốn nạp:"); if(a) { balance += parseInt(a); updateUI(); } }
 
-        function start() {
-            if(racing || bAmt === 0) return;
-            racing = true;
-            document.getElementById('go').disabled = true;
-            let loop = setInterval(() => {
+        // Modal sửa tên
+        function toggleModal(show) {
+            const modal = document.getElementById('nameModal');
+            const container = document.getElementById('inputContainer');
+            if(show) {
+                container.innerHTML = '';
+                names.forEach((n, i) => {
+                    container.innerHTML += `<div class="name-input-group">
+                        <span style="color:white">#${i+1}</span>
+                        <input type="text" id="inp${i}" value="${n}">
+                    </div>`;
+                });
+                modal.display = 'block';
+            }
+            modal.style.display = show ? 'block' : 'none';
+        }
+
+        function saveNames() {
+            for(let i=0; i<12; i++) {
+                let newName = document.getElementById('inp'+i).value || "Vịt "+(i+1);
+                names[i] = newName.substring(0, 12);
+                document.getElementById('nm'+i).innerText = names[i];
+            }
+            updateUI();
+            toggleModal(false);
+        }
+
+        // Logic đua
+        function startRace() {
+            if(isRacing || currentBet === 0) return;
+            isRacing = true;
+            document.getElementById('goBtn').disabled = true;
+            document.getElementById('goBtn').style.background = '#333';
+
+            let raceInterval = setInterval(() => {
                 for(let i=0; i<12; i++) {
-                    ducks[i].x += Math.random() * 4;
+                    ducks[i].x += Math.random() * 4.5; // Tốc độ vừa phải, kịch tính
                     ducks[i].el.style.left = ducks[i].x + 'px';
-                    if(ducks[i].x >= track.offsetWidth - 120) {
-                        clearInterval(loop);
-                        finish(i+1);
+                    
+                    if(ducks[i].x >= track.offsetWidth - 130) {
+                        clearInterval(raceInterval);
+                        announceWinner(i + 1);
                         break;
                     }
                 }
-            }, 40);
+            }, 50);
         }
 
-        function finish(win) {
-            let sel = document.getElementById('duckIdx').value;
-            if(win == sel) {
-                bal += bAmt * 12;
-                alert(`CHIẾN THẮNG! Vịt ${names[win-1]} về nhất! +$${bAmt*12}`);
+        function announceWinner(winIdx) {
+            let userPick = document.getElementById('duckIdx').value;
+            let winnerName = names[winIdx-1];
+            
+            if(winIdx == userPick) {
+                let winAmt = currentBet * 12;
+                balance += winAmt;
+                alert(`🎉 CHIẾN THẮNG RỰC RỠ!\n'${winnerName}' đã về nhất.\nBạn nhận được $${winAmt}`);
             } else {
-                alert(`Vịt ${names[win-1]} về nhất. Bạn đã mất sạch tiền!`);
+                alert(`❌ THẤT BẠI!\n'${winnerName}' đã về nhất.\nBạn đã mất trắng tiền cược!`);
             }
-            bAmt = 0; racing = false;
-            document.getElementById('go').disabled = false;
+            
+            // Reset
+            currentBet = 0;
+            isRacing = false;
+            document.getElementById('goBtn').disabled = false;
+            document.getElementById('goBtn').style.background = '#1e90ff';
             ducks.forEach(d => { d.x = 10; d.el.style.left = '10px'; });
-            update();
+            updateUI();
         }
-        update();
+
+        initGame();
     </script>
 </body>
 </html>
