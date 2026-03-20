@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Duck Race Online</title>
+    <style>
+        body { background: #0a0a0a; color: gold; font-family: Arial; text-align: center; margin: 0; }
+        #track { background: #1e272e; width: 95%; height: 65vh; margin: 10px auto; position: relative; border: 2px solid #444; }
+        .lane { height: 8.3%; border-bottom: 1px solid #2c3e50; position: relative; }
+        .duck { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); }
+        .duck img { height: 40px; }
+        .duck-name { position: absolute; top: -12px; font-size: 11px; color: white; width: 80px; text-align: center; left: 0; }
+        #finish { position: absolute; right: 80px; top: 0; bottom: 0; width: 10px; background: red; }
+        .ctrl { background: #111; padding: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        button { padding: 10px 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2 id="stats">💰 VỐN: $5000 | 🔥 CƯỢC: $0</h2>
+    <div id="track">
+        <div id="finish"></div>
+    </div>
+    <div class="ctrl">
+        <span style="color:white">Vịt số:</span>
+        <input type="number" id="duckIdx" value="1" min="1" max="12" style="width: 50px; font-size: 18px;">
+        <button style="background: #ffa502;" onclick="bet(1000)">+ $1000</button>
+        <button style="background: #ff4757; color: white;" onclick="allIn()">TẤT TAY</button>
+        <button id="go" style="background: #1e90ff; color: white; font-size: 18px;" onclick="start()">ĐUA!</button>
+    </div>
+
+    <script>
+        let bal = parseInt(localStorage.getItem('duckBal')) || 5000;
+        let bAmt = 0;
+        let racing = false;
+        const names = ["Tộc Trưởng", "Độ Mixi", "Refund", "Rambo", "Nhím", "QNT", "Snake", "Funky", "Tiền", "Mèo", "Gà", "Vịt"];
+
+        const track = document.getElementById('track');
+        const ducks = [];
+
+        // Tạo 12 con vịt
+        for(let i=0; i<12; i++) {
+            const div = document.createElement('div');
+            div.className = 'lane';
+            const d = document.createElement('div');
+            d.className = 'duck';
+            // Cài đặt ảnh: dùng file của bạn hoặc ảnh mặc định nếu file lỗi
+            d.innerHTML = `<span class="duck-name">${names[i]}</span><img src="vintage-racing.gif" onerror="this.src='https://i.imgur.com/vHqLh7S.gif'">`;
+            div.appendChild(d);
+            track.appendChild(div);
+            ducks.push({el: d, x: 10});
+        }
+
+        function update() {
+            document.getElementById('stats').innerText = `💰 VỐN: $${bal} | 🔥 CƯỢC: $${bAmt}`;
+            localStorage.setItem('duckBal', bal);
+        }
+
+        function bet(a) { if(!racing && bal >= a) { bal -= a; bAmt += a; update(); } }
+        function allIn() { if(!racing && bal > 0) { bAmt += bal; bal = 0; update(); } }
+
+        function start() {
+            if(racing || bAmt === 0) return;
+            racing = true;
+            document.getElementById('go').disabled = true;
+            let loop = setInterval(() => {
+                for(let i=0; i<12; i++) {
+                    ducks[i].x += Math.random() * 4;
+                    ducks[i].el.style.left = ducks[i].x + 'px';
+                    if(ducks[i].x >= track.offsetWidth - 120) {
+                        clearInterval(loop);
+                        finish(i+1);
+                        break;
+                    }
+                }
+            }, 40);
+        }
+
+        function finish(win) {
+            let sel = document.getElementById('duckIdx').value;
+            if(win == sel) {
+                bal += bAmt * 12;
+                alert(`CHIẾN THẮNG! Vịt ${names[win-1]} về nhất! +$${bAmt*12}`);
+            } else {
+                alert(`Vịt ${names[win-1]} về nhất. Bạn đã mất sạch tiền!`);
+            }
+            bAmt = 0; racing = false;
+            document.getElementById('go').disabled = false;
+            ducks.forEach(d => { d.x = 10; d.el.style.left = '10px'; });
+            update();
+        }
+        update();
+    </script>
+</body>
+</html>
