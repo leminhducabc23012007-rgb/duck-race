@@ -9,7 +9,14 @@
         #track { background: #1e272e; width: 98%; height: 70vh; margin: 5px auto; position: relative; border: 3px solid #333; overflow: hidden; }
         .lane { height: 8.33%; border-bottom: 1px solid #2c3e50; position: relative; }
         .duck { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); transition: left 0.1s linear; }
-        .duck img { height: 45px; }
+        
+        /* Chỉnh sửa ở đây */
+        .duck img { 
+            height: 45px; 
+            /* // --- LẬT NGƯỢC HÌNH ẢNH GIF ĐỂ VỊT CHẠY THẲNG --- */
+            transform: scaleX(-1); /* Lật hình ảnh theo chiều ngang */
+        }
+        
         .duck-name { position: absolute; top: -15px; font-size: 13px; color: white; width: 100px; text-align: center; left: -25px; font-weight: bold; }
         #finish { position: absolute; right: 80px; top: 0; bottom: 0; width: 15px; background: red; }
         .ctrl { background: #1a1a1a; padding: 20px; display: flex; justify-content: center; gap: 15px; align-items: center; border-top: 2px solid gold; }
